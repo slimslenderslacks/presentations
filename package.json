@@ -1,0 +1,30 @@
+{
+  "name": "presentation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "marp && cp themes/bg-*.png dist/",
+    "build:pdf": "marp --pdf && cp themes/bg-*.png dist/",
+    "dev": "marp --server --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slimslenderslacks/presentation.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/slimslenderslacks/presentation/issues"
+  },
+  "homepage": "https://github.com/slimslenderslacks/presentation#readme",
+  "overrides": {
+    "yargs": "^18.0.0"
+  },
+  "devDependencies": {
+    "@marp-team/marp-cli": "^4.3.1",
+    "mermaid": "^11.13.0"
+  }
+}

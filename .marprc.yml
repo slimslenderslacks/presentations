@@ -1,0 +1,6 @@
+engine: ./engine.mjs
+html: true
+allowLocalFiles: true
+inputDir: ./slides
+output: ./dist
+themeSet: ./themes
