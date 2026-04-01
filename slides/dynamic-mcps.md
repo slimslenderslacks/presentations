@@ -7,63 +7,68 @@ paginate: true
 <!-- _class: lead -->
 
 # Dynamic MCPs
-### Turning Agents on Themselves
+## Jim Clark (neovim/spaces/nix-darwin)
 
-> What happens when agents can choose, configure, and test their own tools?
 
----
-
-<!-- _class: section -->
-
-# The Problem with Static Tools
-
-## Agents wait while humans fetch
-
----
-
-## MCPs Have Always Been Static
-
-Today, an MCP server is something you configure **before** the conversation starts.
-
-- You decide which tools the agent gets
-- You register them in a config file
-- You restart, reload, or re-prompt
-- **The agent waits**
-
-When you need a new capability, you leave the agent, do an out-of-band process, come back, and hope context survived.
-
-> This is the same problem as static libraries in a world that needs dynamic linking.
+> What happens when agents can choose, configure, and test their own MCP servers?
 
 ---
 
 <!-- _class: section -->
 
-# A Brief History
+# November 2024
 
-## Skills → Tools → Sandboxes → MCP
-
----
-
-## We Started with Skills
-
-The first insight: **agents need reusable, composable capabilities.**
-
-We called them *skills* — pre-packaged behaviors an agent could invoke.
-
-But skills need **tools** to do real work.
-Tools need **sandboxes** to run safely.
-
-```
-skill
-  └── tool (what does the work)
-        └── sandbox (where it runs safely)
-```
-
-Early attempts stalled on one missing piece: **no standard way for agent loops to interact with tools.**
+## Number of MCP servers in the world:  ZERO
 
 ---
 
-## MCP Changed Everything
+<style scoped>
+pre { font-size: 0.55rem; }
+</style>
+
+Originally, I thought things were going to be very *skill-like.*
+
+I was writing content like this:
+
+```yaml
+---
+tools:
+  name: curl
+  description: use curl to download something
+  image: docker.io/curl:latest   # ← any image from any registry
+  args:
+    - name: args
+      description: the arguments to pass to curl
+      type: array
+      items: string
+---
+
+# Instructions
+
+If you get asked to download something from the internet,
+use this tool. If you need to understand more about curl,
+just run `man curl` and read about it yourself!
+```
+
+---
+
+Tools were **locked inside agent SDKs.**
+
+To integrate, you had to wite an adapter **for each agent**.
+
+```
+LangChain / LangGraph  ──┐
+AutoGen (Microsoft)    ──┤
+CrewAI                 ──┼──  each one a walled garden
+LlamaIndex             ──┤
+Semantic Kernel        ──┘
+```
+
+December 2024 seems so long ago. There were so many different names for what was basically a _tool_. I barely remember any of it.
+
+---
+
+## MCP landed
 
 MCP gave us the **standard interface** we were missing.
 
@@ -81,41 +86,93 @@ graph LR
     style E fill:#D9E5FC,color:#0F121B,stroke:none
 ```
 
-Suddenly, the glue between agent loops and external tools was solved.
-The problem shifted: **which tools, and how do you manage them?**
+This is the power of a protocol. **We unlocked tools from the agents.**
+
+LSP (language-service protocol) had previously un-tethered language ecosystems from editors, allowing developers to choose whatever editor they wanted to use.
 
 ---
 
 <!-- _class: section -->
 
-# Catalogs
+# Jan 2025
 
-## A bounded context for tools
-
----
-
-## The Catalog Problem
-
-Once you have MCP, the next question is: **how do you get tools into it?**
-
-We had thousands of useful npm packages. Getting them into an MCP catalog meant:
-
-- Wrapping each package as an MCP server
-- Testing that the wrapper actually worked
-- Doing this reliably, at scale, without humans in the loop for every one
-
-> *This is what forced the question of dynamic MCPs.*
-
-If an agent could **spin up a candidate tool, test it, and validate it** — catalog building becomes an agent task, not a human task.
+## Number of MCP servers in the world: 29
 
 ---
 
-## What Makes a Catalog Powerful
+## Early Predictions (from me)
+
+1. The tools agents need **already exist**
+2. Agents will probably just read OpenAPI specs and use tools like curl to integrate apis.
+
+Both wrong. We actually wrote a lot of new MCP servers.
+
+> *MCP is how agents can access the tools and content that we already have.*
+
+Sure, but I really thought we were going to _author_ far fewer servers.
+
+---
+
+<!-- _class: section -->
+
+# Summer 2025
+
+## Amassing catalogs — going remote, learning about OAuth
+
+---
+
+## Discovery
+
+Last summer, we built a lot of **MCP servers.**
+
+Many were local at first. Over time they became more and more remote. But there were starting to be a lot of them.
+
+
+```mermaid
+graph LR
+    A[Agent] --> B[mcp.json]
+    B --> C["<br/>So many MCPs!!!!<br/><br/>"]
+    C -->|how?| B
+
+    style A fill:#2560FF,color:#fff,stroke:none
+    style B fill:#0F121B,color:#fff,stroke:none
+    style C fill:#D9E5FC,color:#0F121B,stroke:#0F121B,stroke-width:3px,font-size:20px
+    linkStyle 1 stroke:#ffffff
+```
+
+---
+
+<!-- _class: section -->
+
+# Gateways
+
+## I blame nix, actually.
+
+---
+
+Two amazing concepts from dev environments
+
+1. `nix(inputs) => environment` 
+    - yes, we want my _reproducible_ tool environments
+2. direnv — *where I am* should determine *what tools I need.*
+    - I want my active MCP servers to be a function of what I'm doing
+
+When MCP came along, it seemed useful to mirror these properties.
+
+> An MCP gateway is like the output of an agent asking *what tools are relevant **here**?*
+
+Also, container distribution and and docker runtimes seem like a good starting point.
+
+*(By the way, does anyone remember [whalebrew](https://github.com/whalebrew/whalebrew)?)*
+
+---
+
+## What are the inputs
 
 A catalog is a **bounded context** you can hand to an agent.
 
-- The agent knows exactly what it can do
-- You know exactly what the agent can do
+- The agent knows what's _available_
+- We can _curate_
 - It's a **governance boundary** — not a limitation, a contract
 
 ```
@@ -130,13 +187,81 @@ The catalog says: *the agent can do these things — and nothing else.*
 
 ---
 
-## The Hard Part: Configuration
+## The mcp.json Factory
 
-Individual tools in a catalog often need **configuration, authentication, or authorization**.
+In practice, an agent's `mcp.json` is a defacto **factory.** for giving the agent access to stuff.
 
-- API keys, tokens, registry credentials
-- Agents can sometimes share config **within a session scope**
-- But acquiring that config is still a human-in-the-middle problem
+In that sense, we all use MCP gateways today — they just happen to be embedded in our clients.
+
+However, it has always felt weird that we _leave_ our agents in order to **configure** our MCPs.
+
+> *I'm supposed to stop what I'm doing, leave the agent, configure the MCPs I need, and then come back and continue what I was doing?*
+
+Agents can help us with:
+
+- config
+- secrets
+- authorization
+- installing software
+
+---
+
+<!-- _class: section -->
+
+# Primordial Tools
+
+## tools for managing your MCPs
+
+---
+
+## Primordial tools
+
+```mermaid
+graph LR
+    Client -->|MCP protocol| GW
+
+    subgraph GW[Gateway]
+        P1[mcp-find tool] --> P2[mcp-add tool] --> P3[mcp-config tool]
+    end
+
+    GW --> CAT[Catalog]
+    GW --> S1[MCP Server A]
+    GW --> S2[MCP Server B]
+    GW --> S3[MCP Server C]
+
+    style Client fill:#2560FF,color:#fff,stroke:none
+    style GW fill:#0F121B,color:#fff,stroke:#4a4a4a
+    style P1 fill:#9860FF,color:#fff,stroke:none
+    style P2 fill:#9860FF,color:#fff,stroke:none
+    style P3 fill:#9860FF,color:#fff,stroke:none
+    style CAT fill:#F5A623,color:#0F121B,stroke:none,opacity:1
+    style S1 fill:#2D9568,color:#fff,stroke:none
+    style S2 fill:#2D9568,color:#fff,stroke:none
+    style S3 fill:#2D9568,color:#fff,stroke:none
+    linkStyle 1 stroke:none
+    linkStyle 2 stroke:none
+```
+
+---
+
+## mcp-find, mcp-add, mcp-config
+
+The gateway can offer a **baseline set of tools** — always available:
+
+- `mcp-find` — searches your catalog
+  - does not alter the MCP session
+  - Returns metadata about required configuration
+    - will it need an API key? Will it require an oauth flow. Does it have requird config? 
+  - Importing metadata from the Community registry is great here!
+- `mcp-add` — Add the server to my session. 
+    - If you can't add it, **explain why**
+    - this alters the current MCP session - raises changes notifications
+- `mcp-config` — Take input from the agent.
+    - let the agent try to configure the MCP
+
+---
+
+## Primordial Elicitations
 
 ```mermaid
 sequenceDiagram
@@ -145,62 +270,139 @@ sequenceDiagram
     participant H as Human
     participant T as Tool
 
-    A->>G: use publish-tool
-    G->>H: needs registry token
-    H-->>G: provides token
+    A->>G: need a tool
+    G->>H: out of band elicitation url
+    H-->>G: provides credential
     G->>T: invoke with credential
     T-->>A: result
 ```
 
 ---
 
-<!-- _class: section -->
+## Elicitations
 
-# Why Dynamic MCPs?
+*[demo: gateway eliciting configuration to get started with an MCP server]*
 
-## Three motivations
+```mermaid
+graph TD
+    A[Agent] -->|asks for tool| G[Gateway]
+    G -->|tool not loaded| C[Catalog]
+    C -->|candidate found| G
+    G -->|needs config| E[Primordial Elicitation]
+    E -->|human provides| S[Secret Store / OAuth]
+    S -->|credentials| G
+    G -->|tool ready| A
+    A -->|uses tool| T[MCP Server]
+
+    style A fill:#2560FF,color:#fff,stroke:none
+    style G fill:#0F121B,color:#fff,stroke:none
+    style C fill:#D9E5FC,color:#0F121B,stroke:none
+    style E fill:#9860FF,color:#fff,stroke:none
+    style T fill:#2D9568,color:#fff,stroke:none
+    style S fill:#D9E5FC,color:#0F121B,stroke:none
+```
 
 ---
 
-## Motivation 1: Context Management
+<!-- _class: section -->
 
-Static tool lists blow up your context window.
+# Start With Nothing
 
-Giving an agent 200 tools means 200 tool descriptions sitting in every prompt — most of them irrelevant to the task at hand.
+## Let the agent help you get started
 
-**The sub-agent pattern:**
+---
 
+## The Beauty of an Empty Session
+
+The beauty of starting with nothing:
+
+> *Let the agent help you figure this out*
+
+The agent uses primordial tools to discover what it needs — and loads it.
+
+### Memory
+
+After building up a set of MCP servers, how do we _recall_ this configuration.
+
+My favorite approach is to _name_ the session so that I can recall it from `Agents.md`.
+
+| Primordial Tool | Purpose |
+|----------------|---------|
+| `mcp-session-save` | Persists the current MCP configuration; optionally pushes to an OCI registry |
+| `mcp-session-activate` | Reconstitutes a saved session and raises change notifications |
+
+---
+
+## MCP Zen
+
+```mermaid
+graph LR
+    Client -->|MCP protocol| GW
+
+    subgraph GW[Gateway]
+        P1[mcp-find tool] --> P2[mcp-add tool] --> P3[mcp-config tool]
+    end
+
+    GW --> CAT[Catalog]
+
+    style Client fill:#2560FF,color:#fff,stroke:none
+    style GW fill:#0F121B,color:#fff,stroke:#4a4a4a
+    style P1 fill:#9860FF,color:#fff,stroke:none
+    style P2 fill:#9860FF,color:#fff,stroke:none
+    style P3 fill:#9860FF,color:#fff,stroke:none
+    style CAT fill:#F5A623,color:#0F121B,stroke:none,opacity:1
+    linkStyle 1 stroke:none
+    linkStyle 2 stroke:none
 ```
-parent agent (small context, focused tools)
-    └── sub-agent: "find me the right tools for X"
-          └── searches catalog
-          └── returns: [tool-a, tool-b, tool-c]
-    └── parent continues with only the relevant tools loaded
+
+> Use this catalog to help me solve a problem
+
+---
+
+<!-- _class: section -->
+
+# Context
+
+## We can't just keep adding MCPs
+
+---
+
+## The Context Problem
+
+From an MCP perspective, we've just got a list of tools.
+But there's a lot agents can do with this.
+
+Giving an agent 200 tools means 200 tool descriptions in every prompt — most of them irrelevant to the task at hand.
+
+Two patterns solve this:
+
+1. **Deferred tool loading** — load tools on demand
+2. **Sub-agents that build tool profiles** — compress tool space before handing off to the parent
+
+---
+
+## Deferred Tool Loading
+
+```mermaid
+sequenceDiagram
+    participant P as Parent Agent
+    participant S as Sub-Agent
+    participant G as Gateway
+    participant C as Catalog
+
+    P->>S: find me the right tools for X
+    S->>C: search catalog
+    C-->>S: [tool-a, tool-b, tool-c]
+    S->>G: load tool-a, tool-b, tool-c
+    G-->>P: tools ready
+    P->>P: continues with only relevant tools loaded
 ```
 
 Dynamic MCPs let agents **load exactly what they need, when they need it** — and nothing more.
 
 ---
 
-## Motivation 2: The Foundry Use Case
-
-What if an agent is **building a new tool** — not just using one?
-
-The agent needs to:
-
-1. Write the tool implementation
-2. **Load it into a live MCP session**
-3. Call it, observe the result
-4. Iterate
-
-This requires a sandbox that can **dynamically load code under construction.**
-Static MCP configs can't do this. A dynamic MCP session can.
-
-> The foundry is where tools are made. Agents need a foundry.
-
----
-
-## Motivation 3: Tool Space Compression
+## Sub-Agents That Build Profiles
 
 Sub-agents can **compress a large tool space into a single higher-level tool.**
 
@@ -217,6 +419,33 @@ The parent agent never sees the underlying tools.
 The sub-agent encoded that knowledge **into code**, not into the context window.
 
 This is tool-space compression via code-mode style workflows.
+
+---
+
+<!-- _class: section -->
+
+# Code Mode
+
+## The foundry where tools are made
+
+---
+
+## The Foundry Use Case
+
+What if an agent is **building a new tool** — not just using one?
+
+The agent needs to:
+
+1. Write the tool implementation
+2. **Load it into a live MCP session**
+3. Call it, observe the result
+4. Iterate
+
+This requires a sandbox that can **dynamically load code under construction.**
+
+Static MCP configs can't do this. A dynamic MCP session can.
+
+> The foundry is where tools are made. Agents need a foundry.
 
 ---
 
@@ -241,54 +470,28 @@ It becomes a **participant in assembling its own context.**
 
 <!-- _class: section -->
 
-# The Gateway
+# One Last Tool
 
-## Primordial tools for a dynamic world
-
----
-
-## The Last Hard Problem: Configuration at Runtime
-
-Dynamic tool loading surfaces an old problem in a new context.
-
-When an agent dynamically adds an MCP server, it needs to:
-
-- Know what configuration the server requires
-- Collect secrets or credentials
-- Handle OAuth flows or token exchange
-
-This is where a **gateway** becomes more than a router.
-
-The gateway can offer **primordial tools** — a baseline set of capabilities that exist before any catalog is loaded:
-
-| Primordial Tool | Purpose |
-|----------------|---------|
-| `elicit_config` | Walk user through required fields |
-| `resolve_secret` | Fetch from local credential store |
-| `authorize` | Trigger OAuth / token flow |
+## `mcp-catalog-add`
 
 ---
 
-## The Full Picture
+## Closing the Loop
 
-```mermaid
-graph TD
-    A[Agent] -->|asks for tool| G[Gateway]
-    G -->|tool not loaded| C[Catalog]
-    C -->|candidate found| G
-    G -->|needs config| E[Primordial Elicitation]
-    E -->|human provides| S[Secret Store / OAuth]
-    S -->|credentials| G
-    G -->|tool ready| A
-    A -->|uses tool| T[MCP Server]
+`mcp-catalog-add` — update a catalog with a new tool.
 
-    style A fill:#2560FF,color:#fff,stroke:none
-    style G fill:#0F121B,color:#fff,stroke:none
-    style C fill:#D9E5FC,color:#0F121B,stroke:none
-    style E fill:#9860FF,color:#fff,stroke:none
-    style T fill:#2D9568,color:#fff,stroke:none
-    style S fill:#D9E5FC,color:#0F121B,stroke:none
+The agent:
+1. Uses the foundry to **build** a new tool
+2. Tests it in a live session
+3. **Publishes it back** to the catalog
+
 ```
+build → test → catalog
+```
+
+The catalog grows. The next agent gets a better starting point.
+
+> This is how tool ecosystems evolve — not by humans wrapping packages one at a time, but by agents turning themselves on the problem.
 
 ---
 
