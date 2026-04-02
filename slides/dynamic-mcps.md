@@ -15,14 +15,14 @@ paginate: true
 
 ## Note on slide preparation
 
-* dictate talk
-* give claude code two MCPs
-    * mermaid (for diagrams)
-    * marp (for presentation)
-* > "build companion slides"
-* > "copy styles out of this powerpoint template"
-* read through slide deck and iterate
-* [push to GitHub](https://github.com/slimslenderslacks/presentations/tree/main/slides/dynamic-mcps.md)
+- dictate talk
+- give claude code two MCPs
+    - mermaid (for diagrams)
+    - marp (for presentation)
+- > "build companion slides"
+- > "copy styles out of this powerpoint template"
+- read through slide deck and iterate
+- [push to GitHub](https://github.com/slimslenderslacks/presentations/tree/main/slides/dynamic-mcps.md)
 
 ---
 
@@ -35,7 +35,7 @@ paginate: true
 ---
 
 <style scoped>
-pre { font-size: 0.55rem; }
+pre { font-size: 0.70rem; }
 </style>
 
 Me: thought things were going to _start_ very *skill-like.*
@@ -100,7 +100,7 @@ graph LR
 
 This is the power of a protocol. **We unlocked tools from the agents.**
 
-LSP (language-service protocol) had previously un-tethered language ecosystems from editors, allowing developers to choose whatever editor they wanted to use.
+LSP (language-service protocol) had previously un-tethered language ecosystems from editors. Languages stopped forcing editors on us.
 
 ---
 
@@ -155,6 +155,23 @@ graph LR
 
 ---
 
+## The mcp.json Factory
+
+In practice, an agent's `mcp.json` is a defacto **factory** for the client's _gateway_ to MCP
+
+However, it has always felt weird that it has felt like we have to _leave_ our agents in order to **configure** our MCPs.
+
+> *I'm supposed to stop what I'm doing, leave the agent, configure the MCPs I need, and then come back and continue what I was doing?*
+
+These things are not easy and I can't use an agent to do them?
+
+- config
+- secrets
+- authorization
+- installing software
+
+---
+
 <!-- _class: section -->
 
 # Gateways
@@ -163,18 +180,18 @@ graph LR
 
 ---
 
-Two amazing concepts from a few years obsessing about dev environments
+Two concepts from years obsessing about dev environments
 
 1. `nix(inputs) => environment` 
-    - productivity == environment
-    - yes, we want my _reproducible_ tool environments
-2. direnv — *where I am* should determine *what tools I need.*
+    - your environment (eg your productivity) is the output of a function
+    - we really do want my _reproducible_ tool environments
+2. direnv — *where I am* determines *what tools I need.*
     - I want my active MCP servers to be a function of what I'm doing
     - location!!!
 
 When MCP came along, it seemed useful to mirror these properties.
 
-> An MCP gateway _instance_ is an answer to the question *what tools are relevant **here**?*
+> An MCP gateway should provides tools that are relevant **here**
 
 In the end, docker can be summarized with two words (_pull_ and _run_)
 
@@ -187,8 +204,9 @@ In the end, docker can be summarized with two words (_pull_ and _run_)
 A catalog is a **bounded context** you can hand to an agent.
 
 - The agent knows what's _available_
-- We need a something that can be _curated_ (trusted)
+- We need something that can be _curated_ (trusted)
 - It's a **governance boundary** — not a limitation, a contract
+- A catalog does not have to be _small_. It just has to be safe.
 
 ```
 catalog
@@ -199,25 +217,6 @@ catalog
 ```
 
 The catalog says: *the agent can do these things — and nothing else.*
-
----
-
-## The mcp.json Factory
-
-In practice, an agent's `mcp.json` is a defacto **factory.** for giving the agent access to stuff.
-
-In that sense, we all use MCP gateways today — they just happen to be embedded in our clients.
-
-However, it has always felt weird that it has felt like we have to _leave_ our agents in order to **configure** our MCPs.
-
-> *I'm supposed to stop what I'm doing, leave the agent, configure the MCPs I need, and then come back and continue what I was doing?*
-
-These things are not easy and I can't use an agent to do them?
-
-- config
-- secrets
-- authorization
-- installing software
 
 ---
 
@@ -276,49 +275,6 @@ The gateway can offer a **baseline set of tools** — always available:
 
 ---
 
-## Primordial Elicitations
-
-```mermaid
-sequenceDiagram
-    participant A as Agent
-    participant G as Gateway
-    participant H as Human
-    participant T as Tool
-
-    A->>G: need a tool
-    G->>H: out of band elicitation url
-    H-->>G: provides credential
-    G->>T: invoke with credential
-    T-->>A: result
-```
-
----
-
-## Elicitations
-
-*[demo: gateway eliciting configuration to get started with an MCP server]*
-
-```mermaid
-graph TD
-    A[Agent] -->|asks for tool| G[Gateway]
-    G -->|tool not loaded| C[Catalog]
-    C -->|candidate found| G
-    G -->|needs config| E[Primordial Elicitation]
-    E -->|human provides| S[Secret Store / OAuth]
-    S -->|credentials| G
-    G -->|tool ready| A
-    A -->|uses tool| T[MCP Server]
-
-    style A fill:#2560FF,color:#fff,stroke:none
-    style G fill:#0F121B,color:#fff,stroke:none
-    style C fill:#D9E5FC,color:#0F121B,stroke:none
-    style E fill:#9860FF,color:#fff,stroke:none
-    style T fill:#2D9568,color:#fff,stroke:none
-    style S fill:#D9E5FC,color:#0F121B,stroke:none
-```
-
----
-
 <!-- _class: section -->
 
 # Start With Nothing
@@ -331,24 +287,9 @@ graph TD
 
 Connect to a clean slate (just primordial tools)
 
-> *Let the agent work for you*
+*Let the agent do the work for you*
 
-Let the agent use context to discover tools that are needed.
-
-### Memory
-
-After building up a set of MCP servers, how do we _recall_ this configuration.
-
-My favorite approach is to _name_ the session so that I can recall it from `Agents.md`.
-
-| Primordial Tool | Purpose |
-|----------------|---------|
-| `mcp-session-save` | Persists the current MCP configuration; optionally pushes to an OCI registry |
-| `mcp-session-activate` | Reconstitutes a saved session and raises change notifications |
-
----
-
-Demo
+Use context to discover what tools that are needed.
 
 ---
 
@@ -378,6 +319,95 @@ graph LR
 
 ---
 
+<div style="display:flex;justify-content:center;align-items:center;height:100%">
+<img id="logseq-gif" src="logseq.gif" style="width:90%;height:85%;object-fit:contain">
+</div>
+
+<script>
+(function() {
+  const GIF_DURATION_MS = 8000; // adjust to match actual gif length
+  const img = document.getElementById('logseq-gif');
+  const section = img.closest('section');
+  let timer;
+
+  new MutationObserver(() => {
+    if (section.classList.contains('bespoke-active')) {
+      // restart gif
+      img.style.display = 'block';
+      img.src = '';
+      img.src = 'logseq.gif';
+      clearTimeout(timer);
+      // freeze on last frame after one loop
+      timer = setTimeout(() => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        canvas.style.cssText = img.style.cssText;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        img.src = '';
+        img.parentNode.replaceChild(canvas, img);
+      }, GIF_DURATION_MS);
+    }
+  }).observe(section, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+
+---
+
+### Memory
+
+After building up a set of MCP servers, how do we _recall_ this configuration.
+
+My favorite approach is to _name_ the session so that I can recall it from `Agents.md`.
+
+| Primordial Tool | Purpose |
+|----------------|---------|
+| `mcp-session-save` | Persists the current MCP configuration; optionally pushes to an OCI registry |
+| `mcp-session-activate` | Reconstitutes a saved session and raises change notifications |
+
+---
+
+## Primordial Elicitations
+
+```mermaid
+sequenceDiagram
+    participant A as Agent
+    participant G as Gateway
+    participant H as Human
+    participant T as Tool
+
+    A->>G: need a tool
+    G->>H: out of band elicitation url
+    H-->>G: provides credential
+    G->>T: invoke with credential
+    T-->>A: result
+```
+
+---
+
+## Elicitations
+
+
+```mermaid
+graph TD
+    A[Agent] -->|asks for tool| G[Gateway]
+    G -->|tool not loaded| C[Catalog]
+    C -->|candidate found| G
+    G -->|needs config| E[Primordial Elicitation]
+    E -->|human provides| S[Secret Store / OAuth]
+    S -->|credentials| G
+    G -->|tool ready| A
+    A -->|uses tool| T[MCP Server]
+
+    style A fill:#2560FF,color:#fff,stroke:none
+    style G fill:#0F121B,color:#fff,stroke:none
+    style C fill:#D9E5FC,color:#0F121B,stroke:none
+    style E fill:#9860FF,color:#fff,stroke:none
+    style T fill:#2D9568,color:#fff,stroke:none
+    style S fill:#D9E5FC,color:#0F121B,stroke:none
+```
+---
+
 <!-- _class: section -->
 
 # Context
@@ -388,11 +418,11 @@ graph LR
 
 ## The Context Problem
 
-The job of the MCP was provide tools. Nobody told agents to put every tool in context.
+The job of the MCP server was to provide tools that might be useful. It actually doesn't say anything about how to add them to an agent conversation.
+
+We see a lot of complaints about MCP that read like this:
 
 > Giving an agent 200 tools means 200 tool descriptions in every prompt — most of them irrelevant to the task at hand!
-
-These are complaints about the whole ecosystem of agents _plus_ MCPs.
 
 We are coming up with new ways to handle this.
 
@@ -404,7 +434,7 @@ We are coming up with new ways to handle this.
 
 ## Deferred Tools
 
-Models like Claude support _deferred_ tools.
+Anthropic invented the idea of a _deferred_ tool.
 
 ```mermaid
 sequenceDiagram
@@ -450,7 +480,7 @@ MCPs let agents **load exactly what they need, when they need it** — and nothi
 
 <!-- _class: section -->
 
-# Let the agent code
+# Agents will code
 
 ## Tool foundries
 
@@ -458,7 +488,7 @@ MCPs let agents **load exactly what they need, when they need it** — and nothi
 
 ## Tool Compression 
 
-Sub-agents can **compress a large tool space into a single higher-level tool.**
+**compress a large tool space into a single higher-level tool.**
 
 ```
 sub-agent knows about: [npm, build, test, lint, publish]
@@ -469,10 +499,10 @@ parent agent context:
   └── (nothing else needed)
 ```
 
-The parent agent never sees the underlying tools.
-The sub-agent encoded that knowledge **into code**, not into the context window.
+The parent agent sees a higher level of abstraction
+The sub-agent encodes knowledge into a tool, not into the context window.
 
-This is tool-space compression via code-mode style workflows.
+This is an importan property of code-mode style workflows.
 
 ---
 
@@ -480,8 +510,8 @@ This is tool-space compression via code-mode style workflows.
 
 > Create a new MCP tool that knows how _directly_ call other MCPs
 
-* we have implemented this as another primordial gateway tool
-* only code mode tool should be added to the agent context
+- we have implemented this as another primordial gateway tool called `code-mode`
+- only the code mode tool added to context
 
 ```mermaid
 sequenceDiagram
@@ -501,6 +531,52 @@ sequenceDiagram
 
 ## Code mode sandboxes
 
+```mermaid
+graph LR
+    A[Agent] -->|"MCP call (agent authors code)"| MCI[MCP interface]
+
+    subgraph CM["Code Mode Tool (sandbox)"]
+        MCI --> CODE[user code]
+    end
+
+    CODE -->|injected JS interface| SB1
+    CODE -->|injected JS interface| SB2
+    CODE -->|injected JS interface| SB3
+
+    subgraph SB1["MCP Sandbox A"]
+        T1[tool]
+    end
+
+    subgraph SB2["MCP Sandbox B"]
+        T2[tool]
+    end
+
+    subgraph SB3["MCP Sandbox C"]
+        T3[tool]
+    end
+
+    style A fill:#2560FF,color:#fff,stroke:none
+    style MCI fill:#9860FF,color:#fff,stroke:none
+    style CODE fill:#9860FF,color:#fff,stroke:none
+    style CM fill:#0F121B,color:#fff,stroke:#4a4a4a
+    style SB1 fill:#1a2a1a,color:#fff,stroke:#2D9568
+    style SB2 fill:#1a2a1a,color:#fff,stroke:#2D9568
+    style SB3 fill:#1a2a1a,color:#fff,stroke:#2D9568
+    style T1 fill:#2D9568,color:#fff,stroke:none
+    style T2 fill:#2D9568,color:#fff,stroke:none
+    style T3 fill:#2D9568,color:#fff,stroke:none
+```
+
+* credentials and authorizations remain with their original MCP server sandboxes
+
+---
+
+<div style="display:flex;justify-content:center;align-items:center;height:100%">
+
+![CodeMode demo](CodeMode.gif)
+
+</div>
+
 ---
 
 ## The Foundry Use Case
@@ -514,19 +590,19 @@ The agent needs to:
 3. Call it, observe the result
 4. Iterate
 
-This requires a sandbox that can **dynamically load code under construction.**
+This also requires a sandbox that can **dynamically load code under construction.**
 
-Static MCP configs can't do this. Agents see _new_ tools in their session.
+To an agent skill, this looks like `mcp-add` on a new catalog item.
 
 ---
 
 <!-- _class: dark -->
 
-## Turning Agents on Themselves
+## Agents exploring the MCP space
 
 We now have two foundational pieces in place:
 
-**Universal runtimes** — any MCP server can run anywhere, consistently.
+**Sandboxed runtimes** — MCP servers in the catalog can request their own configuration
 
 **Catalogs** — a governed, bounded set of tools an agent can use.
 
@@ -535,7 +611,8 @@ With these in place, we can ask a question we couldn't ask before:
 > *"Can you use this catalog to help me solve a problem?"*
 
 The agent is no longer a consumer of a fixed tool set.
-It becomes a **participant in assembling its own context.**
+
+Limited **participation** in assembling its own context.
 
 ---
 
@@ -560,9 +637,9 @@ The agent:
 build → test → catalog
 ```
 
-The catalog grows. The next agent gets a better starting point.
+The catalog grows. The next agent gets a different starting point.
 
-> This is how tool ecosystems might evolve — letting agents iterate on the problem.
+> This is how tool ecosystems might evolve — letting agents iterate on the problem with catalogs as outputs.
 
 ---
 
@@ -577,7 +654,7 @@ The catalog grows. The next agent gets a better starting point.
 | `mcp-session-activate` | medium | Reconstitutes a saved session and raises change notifications |
 | `code-mode` | medium | build a new tool |
 | `mcp-exec` | low | working around missing notificiations |
-| `mcp-catalog-add` | low | agents still red-teaming some of these loops |
+| `mcp-catalog-add` | low | still red-teaming some of these loops |
 
 ---
 
