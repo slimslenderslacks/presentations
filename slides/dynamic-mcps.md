@@ -535,11 +535,15 @@ parent agent context:
 The parent agent sees a higher level of abstraction
 The sub-agent encodes knowledge into a tool, not into the context window.
 
-This is an importan property of code-mode style workflows.
+This is an important property of code-mode style workflows.
 
 ---
 
 ## Code mode
+
+<style scoped>
+svg marker path { fill: #333 !important; stroke: #333 !important; }
+</style>
 
 > Create a new MCP tool that knows how _directly_ call other MCPs
 
@@ -572,9 +576,12 @@ graph LR
         MCI --> CODE[user code]
     end
 
-    CODE -->|injected JS interface| SB1
-    CODE -->|injected JS interface| SB2
-    CODE -->|injected JS interface| SB3
+    CODE -->|injected JS interface| T1
+    CODE -->|injected JS interface| T2
+    CODE -->|injected JS interface| T3
+    T1 -->|result| CODE
+    T2 -->|result| CODE
+    T3 -->|result| CODE
 
     subgraph SB1["MCP Sandbox A"]
         T1[tool]
@@ -591,7 +598,7 @@ graph LR
     style A fill:#2560FF,color:#fff,stroke:none
     style MCI fill:#9860FF,color:#fff,stroke:none
     style CODE fill:#9860FF,color:#fff,stroke:none
-    style CM fill:#0F121B,color:#fff,stroke:#4a4a4a
+    style CM fill:transparent,color:#000,stroke:#4a4a4a
     style SB1 fill:#1a2a1a,color:#fff,stroke:#2D9568
     style SB2 fill:#1a2a1a,color:#fff,stroke:#2D9568
     style SB3 fill:#1a2a1a,color:#fff,stroke:#2D9568
