@@ -15,14 +15,15 @@ paginate: true
 
 ## Note on slide preparation
 
-- dictate talk
-- give claude code two MCPs
+- dictated talk
+- gave claude code three MCPs
     - mermaid (for diagrams)
     - marp (for presentation)
+    - ffmpeg
 - > "build companion slides"
 - > "copy styles out of this powerpoint template"
 - read through slide deck and iterate
-- [push to GitHub](https://github.com/slimslenderslacks/presentations/tree/main/slides/dynamic-mcps.md)
+- [push to GitHub](https://github.com/slimslenderslacks/presentations/blob/mcp-talk/slides/dynamic-mcps.md)
 
 ---
 
@@ -38,9 +39,9 @@ paginate: true
 pre { font-size: 0.70rem; }
 </style>
 
-Me: thought things were going to _start_ very *skill-like.*
+Me: thought things were going to be very *skill-like* right away.
 
-At the time, I was writing content like this (prompts _select_ tools - tools are containers)
+At the time, little snippets like this were already useful (prompts _select_ tools - tools are containers)
 
 ```yaml
 ---
@@ -64,7 +65,7 @@ just run `man curl` and read about it yourself!
 
 ---
 
-Tools were **locked inside agent SDKs.**
+BUT tools were **locked inside agent SDKs.**
 
 To integrate, you had to wite an adapter **for each agent**.
 
