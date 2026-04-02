@@ -408,6 +408,39 @@ graph TD
 ```
 ---
 
+<div style="display:flex;justify-content:center;align-items:center;height:100%">
+<img id="goose-gif" src="goose.gif" style="width:90%;height:85%;object-fit:contain">
+</div>
+
+<script>
+(function() {
+  const GIF_DURATION_MS = 8000; // adjust to match actual gif length
+  const img = document.getElementById('goose-gif');
+  const section = img.closest('section');
+  let timer;
+
+  new MutationObserver(() => {
+    if (section.classList.contains('bespoke-active')) {
+      img.style.display = 'block';
+      img.src = '';
+      img.src = 'goose.gif';
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        canvas.style.cssText = img.style.cssText;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        img.src = '';
+        img.parentNode.replaceChild(canvas, img);
+      }, GIF_DURATION_MS);
+    }
+  }).observe(section, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+
+---
+
 <!-- _class: section -->
 
 # Context
